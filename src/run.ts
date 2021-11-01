@@ -8,7 +8,7 @@ import type { PullRequestStatus } from "./types"
 export async function run(): Promise<void> {
   const inputs = new Inputs()
 
-  core.debug(`We got the event ${context.eventName}.`)
+  console.log(`We got the event ${context.eventName}.`)
   switch (context.eventName) {
     case "schedule":
     case "workflow_dispatch":
@@ -36,7 +36,7 @@ async function handleAllPulls(inputs: Inputs): Promise<void> {
       !pull.labels.includes(inputs.noBlockLabel)
         ? "pending"
         : "success"
-    core.debug(`We decided to make the state "${state}" for "#${pull.number}"`)
+    console.log(`We decided to make the state "${state}" for "#${pull.number}"`)
     try {
       await createCommitStatus(octokit, pull, inputs, state)
     } catch (error) {
@@ -67,6 +67,7 @@ async function handlePull(inputs: Inputs): Promise<void> {
     throw new Error(`handlePull can only be used for a pull request event`)
   }
   const result = await pull(octokit, owner, repo, inputs.commitStatusContext, number)
+  console.dir(result)
 
   // TODO: shouldBlock() should decide which labels and base branches should be treated as "no block."
   const state =
@@ -75,6 +76,6 @@ async function handlePull(inputs: Inputs): Promise<void> {
     !result.pull.labels.includes(inputs.noBlockLabel)
       ? "pending"
       : "success"
-  core.debug(`We decided to make the state "${state}"`)
+  console.log(`We decided to make the state "${state}"`)
   return createCommitStatus(octokit, result.pull, inputs, state)
 }

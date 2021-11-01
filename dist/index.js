@@ -13774,19 +13774,18 @@ function escapeRegExpCharacters(s) {
 
 ;// CONCATENATED MODULE: ./src/should-block.ts
 
-
 function shouldBlock(inputs) {
-    core.debug(`Start shouldBlock()`);
+    console.log(`Start shouldBlock()`);
     const now = luxon/* DateTime.now */.ou.now().setZone(inputs.timezone);
     if (isProhibitedDay(now, inputs.prohibitedDays, inputs.prohibitedDates)) {
-        core.debug(`shouldBlock() decided to return "true" because ${now} is within prohibited days`);
+        console.log(`shouldBlock() decided to return "true" because ${now} is within prohibited days`);
         return true;
     }
     else if (isDuringTime(now, inputs.after, inputs.before)) {
-        core.debug(`shouldBlock() decided to return "true" because ${now} is during prohibited hours`);
+        console.log(`shouldBlock() decided to return "true" because ${now} is during prohibited hours`);
         return true;
     }
-    core.debug(`shouldBlock() decided to return "false"`);
+    console.log(`shouldBlock() decided to return "false"`);
     return false;
 }
 function isProhibitedDay(now, days, dates) {
@@ -13840,12 +13839,11 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 function createCommitStatus(octokit, pullRequestStatus, inputs, state) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const currentState = (_a = pullRequestStatus.state) === null || _a === void 0 ? void 0 : _a.toLowerCase();
-        core.debug(`Start createCommitStatus(), updating the state of "${pullRequestStatus.sha}" from "${currentState}" to "${state}"`);
+        console.log(`Start createCommitStatus(), updating the state of "${pullRequestStatus.sha}" from "${currentState}" to "${state}"`);
         if (currentState === state) {
             return;
         }
@@ -13876,7 +13874,7 @@ function createCommitStatus(octokit, pullRequestStatus, inputs, state) {
 }
 function defaultBranch(octokit, owner, repo) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Start defaultBranch() to get the default branch of ${owner}/${repo}`);
+        console.log(`Start defaultBranch() to get the default branch of ${owner}/${repo}`);
         const result = yield octokit.graphql(`
 query($owner: String!, $repo: String!) {
   repository(owner: $owner, name: $repo) {
@@ -13891,7 +13889,7 @@ query($owner: String!, $repo: String!) {
 function pull(octokit, owner, repo, contextName, pullNumber) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Start pull() to get the pull request of ${owner}/${repo}#${pullNumber}`);
+        console.log(`Start pull() to get the pull request of ${owner}/${repo}#${pullNumber}`);
         const result = yield octokit.graphql(`
 query($owner: String!, $repo: String!, $contextName: String!, $pullNumber: Int!) {
   repository(owner: $owner, name: $repo) {
@@ -13927,7 +13925,7 @@ query($owner: String!, $repo: String!, $contextName: String!, $pullNumber: Int!)
     }
   }
 }`, { owner, repo, contextName, pullNumber });
-        core.debug(`pull() got the pull request: #${result.repository.pullRequest.number} ${result.repository.pullRequest.title}`);
+        console.log(`pull() got the pull request: #${result.repository.pullRequest.number} ${result.repository.pullRequest.title}`);
         const commit = result.repository.pullRequest.commits.edges[0];
         if (commit == null) {
             throw new Error("commit should be present");
@@ -13949,7 +13947,7 @@ query($owner: String!, $repo: String!, $contextName: String!, $pullNumber: Int!)
 }
 function pulls(octokit, owner, repo, contextName) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Start pulls() to get the pull requests of ${owner}/${repo}`);
+        console.log(`Start pulls() to get the pull requests of ${owner}/${repo}`);
         let after = null;
         let hasNextPage = true;
         let statuses = [];
@@ -14000,7 +13998,7 @@ query($owner: String!, $repo: String!, $contextName: String!, $after: String) {
             hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
             after = result.repository.pullRequests.pageInfo.endCursor;
             const data = result.repository.pullRequests.edges.flatMap(({ node: pr }) => {
-                core.debug(`pulls() got the pull request: #${pr.number} ${pr.title}`);
+                console.log(`pulls() got the pull request: #${pr.number} ${pr.title}`);
                 return pr.commits.edges.map(({ node: commit }) => {
                     var _a, _b;
                     return ({
@@ -14038,7 +14036,7 @@ var run_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 function run() {
     return run_awaiter(this, void 0, void 0, function* () {
         const inputs = new Inputs();
-        core.debug(`We got the event ${github.context.eventName}.`);
+        console.log(`We got the event ${github.context.eventName}.`);
         switch (github.context.eventName) {
             case "schedule":
             case "workflow_dispatch":
@@ -14065,7 +14063,7 @@ function handleAllPulls(inputs) {
                 !pull.labels.includes(inputs.noBlockLabel)
                 ? "pending"
                 : "success";
-            core.debug(`We decided to make the state "${state}" for "#${pull.number}"`);
+            console.log(`We decided to make the state "${state}" for "#${pull.number}"`);
             try {
                 yield createCommitStatus(octokit, pull, inputs, state);
             }
@@ -14094,13 +14092,14 @@ function handlePull(inputs) {
             throw new Error(`handlePull can only be used for a pull request event`);
         }
         const result = yield pull(octokit, owner, repo, inputs.commitStatusContext, number);
+        console.dir(result);
         // TODO: shouldBlock() should decide which labels and base branches should be treated as "no block."
         const state = inputs.baseBranches(result.defaultBranch).some((b) => b.test(result.pull.baseBranch)) &&
             shouldBlock(inputs) &&
             !result.pull.labels.includes(inputs.noBlockLabel)
             ? "pending"
             : "success";
-        core.debug(`We decided to make the state "${state}"`);
+        console.log(`We decided to make the state "${state}"`);
         return createCommitStatus(octokit, result.pull, inputs, state);
     });
 }
